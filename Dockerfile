@@ -7,4 +7,4 @@ RUN CGO_ENABLED=0 GOOS=linux go build
 FROM alpine
 COPY --from=builder /go/src/github.com/alcheagle/example_server .
 EXPOSE 8080
-ENTRYPOINT ["/example_server"]
+ENTRYPOINT ["/simple_web_server"]
