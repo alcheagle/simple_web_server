@@ -8,4 +8,4 @@ FROM alpine
 WORKDIR /app/server
 COPY --from=builder /go/src/github.com/alcheagle/simple_web_server .
 EXPOSE 8080
-ENTRYPOINT ["/simple_web_server"]
+ENTRYPOINT ["./simple_web_server"]
