@@ -1,3 +1,18 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+ name: simple-web-server
+ annotations:
+   volume.beta.kubernetes.io/storage-class: glusterfs-storage
+spec:
+ accessModes:
+  - ReadWriteMany
+ resources:
+   requests:
+     storage: 2Gi
+
+---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,9 +29,19 @@ spec:
     spec:
       containers:
       - image: alcheagle/simple_web_server
+        imagePullPolicy: Always
+        args:
+          - --counter-file=/data/counter.bin
         name: simple-web-server
         ports:
         - containerPort: 8080
+        volumeMounts:
+        - name: shared-data
+          mountPath: /data
+      volumes:
+      - name: shared-data
+        persistentVolumeClaim:
+          claimName: simple-web-server
 
 ---
 
@@ -31,17 +56,36 @@ spec:
   selector:
     k8s-app: simple-web-server
 
+# ---
+#
+# apiVersion: v1
+# data:
+#   tls.crt: "MIIFnTCCA4WgAwIBAgIJALeN0rElw0VNMA0GCSqGSIb3DQEBCwUAMGUxCzAJBgNVBAYTAklUMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQxHjAcBgNVBAMMFXRlc3QuazhzLnJhcHRvcmJveC5ldTAeFw0xODA4MDcxNTE2NDdaFw0xOTA4MDcxNTE2NDdaMGUxCzAJBgNVBAYTAklUMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQxHjAcBgNVBAMMFXRlc3QuazhzLnJhcHRvcmJveC5ldTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAJe8eYSVOaxMT3uoY5xRT+zgehfNU+vvliO+03wurLFTSQjcUATkg0UkxjrMN2OWB1nA4n8V+vYqyooA93Kk6hAwEiv2Et9ygamMGN8kAdAiABU5AoKHEzzNEtiwJRXQMP7bayq8IJKf7LbqfSS3n7IPSJG2X2cvMwu9ixFtYJbz28iIAsThKNuVxvQmpqywnntuj6VQwB7LJhqXqBIDGMjbiaD9EV91nWjujjVcIn6FwEmZlseRMH8L3GtCYh2ls5pS0a4SNDidoCU7vQHRZT1+zMo+vMCTmE1LgYuUrXf6OFW5gmzk8zxH1s7gCSVqa8mZkMYvAdcX87VzA4qECNFQkkDqsYw341uKyvdyMcqLxumEmB+AiF/rrLPl2s+sptI4FITxMI7NCDzZfwTF7wBxp8r+MixOM0UV2NlshjfJ9F129U6CZdgyTcox42PC9eU8xFJ0bbRUCnvIeIrsQgXy+pYJjg0vbD1DxiwT69QBtXz2aVTKCOkb6dwLokTk7v2jXbBd9QIixfPnzkr5/P5BDhXFsa4H75dW6LVRx78Srlx5ZGJDczsZdOXxdQ28VK6eJvgSZ07QIPCnJMkj4gys3BliPVxkWAlaEdK8XxqdAvFjLJ5iGgzjC6RvHdKDr9im7NDeciSg0hQzk7cPkHl22DnTdEmJA9ZDAK3ai2TZAgMBAAGjUDBOMB0GA1UdDgQWBBSh1IrY0ymsJGhH/SWVv+Ql60930TAfBgNVHSMEGDAWgBSh1IrY0ymsJGhH/SWVv+Ql60930TAMBgNVHRMEBTADAQH/MA0GCSqGSIb3DQEBCwUAA4ICAQCOGXCaOoT99do9RIkdiz2wF2zsYwC1HsUS6e5EmCXnSGXaIHWQxsb8E3yoSPOXResT8ZTPwa/i1EgMtbnOHfxbXmOUt2DfwKWhrdu555uXPud4BoBp8SNhNMNzYfCeXFQXRzG/1xHCUyk1PoL3Q1exEozVfjyjUQEUmH/gBHXJ19C9hlVReA6YwwkuGyzbcTuDwAT5EAap1ms6D+uG7Ef2L5Pp260mH8M73dj5WC1gGP7eGnvVb++ZDD9Slm/BA9CfF+s1crh2A8qt1W1EGJfmYylHYnNIDNlm8FTGf4OZYWQQb/XFCiVWOJ62ckdyrHkKAsAzTv5wtl5goFHT93zpXY1IUU0XMM16o3qSMNxBOEALLBafLQ6TlL1ryGUsLc7aJI3FdgU1h88ryDDeif/TF/e48JJixeAAcBCmW59ukalO2pRA9ANKrSqcpcQnWKDbbhtAiJZfNZJKU+ouZ6OfPY0Ca5rwd53AXvEIUpw0DrAT5CGSuBG9xCVWwZGdsyTurdtQvaBzIzRfmwDii5c8uv6I1Lh1SJ9/9ozA1Ak+niabM75krW5szHJSlEqSbwqzwk5WuYresQdb66VQ16laatsbNmLlV7hqyUmR1S8fK0n9KamRR4rUo3csq8SJ08q68DepPunu4BDTyydrTaAJ//daCQSP7g3LQp5YduwmFg=="
+#   tls.key: "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"
+# kind: Secret
+# metadata:
+#   name: simple-web-server-ssl
+# type: Opaque
+
 ---
 
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: simple-web-server
+  annotations:
+    # kubernetes.io/tls-acme: "true"
+    certmanager.k8s.io/cluster-issuer: "letsencrypt-prod"
+  #   kubernetes.io/ingress.class: "nginx"
 spec:
+  tls:
+  - hosts:
+    - testpippo1.k8s.raptorbox.eu
+    secretName: simple-web-server
   rules:
-    - http:
+    - host: testpippo1.k8s.raptorbox.eu
+      http:
         paths:
-        - path: /simple_web_server
-          backend:
+        - backend:
             serviceName: simple-web-server
             servicePort: 8080
